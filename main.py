@@ -43,12 +43,39 @@ agent = create_tool_calling_agent(
 )
 
 agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
-query = input("Enter your research topic: ")
-response = agent_executor.invoke(
-    {"query": query}
-)
+print("🔍 AI Research Assistant")
+print("=" * 50)
+
+query = input("\nEnter your research topic: ")
+
+print("\n🔄 Researching...\n")
+response = agent_executor.invoke({"query": query})
+
+print("\n" + "=" * 50)
+print("📊 RESULTS")
+print("=" * 50 + "\n")
+
 try:
-    structured_response = parser.parse(response.get("output")[0]["text"])
-    print(structured_response)
+    output = response.get("output")
+
+    if isinstance(output, list) and len(output) > 0:
+        output = output[0].get("text", output[0])
+    
+    if isinstance(output, str):
+        output = output.strip()
+        if output.startswith("```json"):
+            output = output.replace("```json", "").replace("```", "").strip()
+    
+    structured_response = parser.parse(output)
+    
+    print(f"📌 TOPIC: {structured_response.topic}\n")
+    print(f"📝 SUMMARY:\n{structured_response.summary}\n")
+    print(f"🔗 SOURCES:")
+    for i, source in enumerate(structured_response.sources, 1):
+        print(f"   {i}. {source}")
+    print(f"\n🛠️  TOOLS USED: {', '.join(structured_response.tools_used)}")
+    
 except Exception as e:
-    print("Failed to parse response:", e, "Response was:", response)
+    print("⚠️  Failed to parse structured response")
+    print(f"Raw output: {response.get('output')}")
+    print(f"Error: {e}")
