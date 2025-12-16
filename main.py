@@ -48,7 +48,15 @@ agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
 print("🔍 AI Research Assistant")
 print("=" * 50)
 
-query = input("\nEnter your research topic: ")
+query = input("\nEnter your research topic: ").strip()
+
+if not query:
+    print("❌ Please enter a valid topic!")
+    exit(1)
+
+if len(query) < 3:
+    print("❌ Topic too short. Please be more specific.")
+    exit(1)
 
 print("\n🔄 Researching", end="")
 for _ in range(3):
@@ -56,7 +64,12 @@ for _ in range(3):
     print(".", end="", flush=True)
 print("\n")
 
-response = agent_executor.invoke({"query": query})
+try:
+    response = agent_executor.invoke({"query": query})
+except Exception as e:
+    print(f"\n❌ Error occurred: {e}")
+    print("Please check your API key or try again later.")
+    exit(1)
 
 print("\n" + "=" * 50)
 print("📊 RESULTS")
