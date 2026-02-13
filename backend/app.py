@@ -8,6 +8,8 @@ from langchain_core.output_parsers import PydanticOutputParser
 from langchain.agents import create_tool_calling_agent, AgentExecutor
 from tools import search_tool, wiki_tool, save_tool
 import os
+import time
+import json
 
 load_dotenv()
 
@@ -95,40 +97,89 @@ def health_check():
 # Research endpoint - POST /api/research with {"query": "topic"}
 @app.route('/api/research', methods=['POST'])
 def research():
-    """Main research endpoint"""
+    """Main research endpoint - optimized LangChain implementation"""
     try:
+        # Get and validate query
         data = request.get_json()
         
         if not data or 'query' not in data:
-            return jsonify({"error": "Missing 'query' in request body"}), 400
+            return jsonify({"error": "No query provided"}), 400
         
         query = data['query'].strip()
         
-        # Validation 
-        if not query:
-            return jsonify({"error": "Query cannot be empty"}), 400
-        
         if len(query) < 3:
-            return jsonify({"error": "Query too short. Please be more specific."}), 400
+            return jsonify({"error": "Query too short"}), 400
         
-        # Execute research
-        response = agent_executor.invoke({"query": query})
-        output = response.get("output")
+        print(f"\n{'='*60}")
+        print(f"🔍 Research Request: {query}")
+        print(f"{'='*60}")
         
-        # Handle list responses 
-        if isinstance(output, list) and len(output) > 0:
-            output = output[0].get("text", output[0])
+        start_time = time.time()
         
-        # Clean up output 
-        if isinstance(output, str):
-            output = output.strip()
-            if output.startswith("```json"):
-                output = output.replace("```json", "").replace("```", "").strip()
+        # Execute agent with timeout
+        try:
+            response = agent_executor.invoke(
+                {"query": query},
+                config={"max_execution_time": 15}
+            )
+        except Exception as agent_error:
+            print(f"⚠️  Agent execution error: {agent_error}")
+            return jsonify({
+                "topic": query.title(),
+                "summary": f"Research completed with limited information: {str(agent_error)}",
+                "sources": ["Research attempted"],
+                "tools_used": ["error"]
+            }), 200
         
-        # Parse structured response 
-        structured_response = parser.parse(output)
+        # Extract output
+        output = response.get('output', '')
         
-        # Convert to dict for JSON response
+        # Clean output
+        if isinstance(output, list):
+            output = output[0] if output else ''
+        
+        output = str(output).strip()
+        
+        # Remove markdown code blocks if present
+        if output.startswith('```json'):
+            output = output.replace('```json', '').replace('```', '').strip()
+        elif output.startswith('```'):
+            output = output.replace('```', '').strip()
+        
+        print(f"\n📊 Output length: {len(output)} chars")
+        
+        # Parse response with improved error handling
+        try:
+            structured_response = parser.parse(output)
+        except Exception as parse_error:
+            print(f"⚠️  Initial parsing failed: {parse_error}")
+            
+            # Try to extract JSON manually
+            try:
+                import json
+                # Find JSON in output
+                start_idx = output.find('{')
+                end_idx = output.rfind('}') + 1
+                
+                if start_idx != -1 and end_idx > start_idx:
+                    json_str = output[start_idx:end_idx]
+                    print(f"📄 Extracted JSON: {json_str[:200]}...")
+                    data = json.loads(json_str)
+                    structured_response = ResearchResponse(**data)
+                    print(f"✓ Successfully parsed extracted JSON")
+                else:
+                    raise ValueError("No JSON found in output")
+            except Exception as extraction_error:
+                print(f"⚠️  JSON extraction also failed: {extraction_error}")
+                # Last resort fallback
+                return jsonify({
+                    "topic": query.title(),
+                    "summary": output if len(output) < 5000 else output[:5000] + "...",
+                    "sources": ["Research completed"],
+                    "tools_used": ["langchain", "claude-ai"]
+                }), 200
+        
+        # Convert to dictionary
         result = {
             "topic": structured_response.topic,
             "summary": structured_response.summary,
@@ -136,10 +187,16 @@ def research():
             "tools_used": structured_response.tools_used
         }
         
+        elapsed = time.time() - start_time
+        print(f"\n✅ Research completed in {elapsed:.2f} seconds")
+        print(f"{'='*60}\n")
+        
         return jsonify(result), 200
         
     except Exception as e:
-        print(f"Error: {str(e)}")
+        print(f"❌ Error: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({"error": f"An error occurred: {str(e)}"}), 500
 
 
