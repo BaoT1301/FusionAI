@@ -119,8 +119,8 @@ def research():
         # Execute agent with timeout
         try:
             response = agent_executor.invoke(
-                {"query": query},
-                config={"max_execution_time": 15}
+                {"query": query, "chat_history": []},
+                config={"max_execution_time": 30}
             )
         except Exception as agent_error:
             print(f"⚠️  Agent execution error: {agent_error}")
@@ -134,29 +134,36 @@ def research():
         # Extract output
         output = response.get('output', '')
         
-        # Clean output
+        # Clean output - handle different response formats
         if isinstance(output, list):
+            # If it's a list, get the first item
             output = output[0] if output else ''
-        
+            
+        # If output is a dict with 'text' field (LangChain structure)
+        if isinstance(output, dict):
+            output = output.get('text', str(output))
+
+        # Convert to string
         output = str(output).strip()
+
+        # Remove markdown code blocks
+        output = output.replace('```json', '').replace('```', '').strip()
         
-        # Remove markdown code blocks if present
-        if output.startswith('```json'):
-            output = output.replace('```json', '').replace('```', '').strip()
-        elif output.startswith('```'):
-            output = output.replace('```', '').strip()
+        # Remove any leading/trailing newlines and whitespace
+        output = output.strip('\n').strip()
         
         print(f"\n📊 Output length: {len(output)} chars")
+        print(f"📄 Preview: {output[:200]}...")
         
         # Parse response with improved error handling
         try:
             structured_response = parser.parse(output)
+            print(f"✅ Successfully parsed response")
         except Exception as parse_error:
             print(f"⚠️  Initial parsing failed: {parse_error}")
             
             # Try to extract JSON manually
             try:
-                import json
                 # Find JSON in output
                 start_idx = output.find('{')
                 end_idx = output.rfind('}') + 1
@@ -166,7 +173,7 @@ def research():
                     print(f"📄 Extracted JSON: {json_str[:200]}...")
                     data = json.loads(json_str)
                     structured_response = ResearchResponse(**data)
-                    print(f"✓ Successfully parsed extracted JSON")
+                    print(f"✅ Successfully parsed extracted JSON")
                 else:
                     raise ValueError("No JSON found in output")
             except Exception as extraction_error:
