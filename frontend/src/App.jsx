@@ -391,7 +391,9 @@ async function apiCall(path, options = {}) {
   const res = await fetch(`${API_BASE}${path}`, { ...options, headers })
   if (!res.ok) {
     const err = await res.json().catch(() => ({}))
-    throw new Error(err.detail || `Request failed (${res.status})`)
+    const raw = err.detail || err.error || `Request failed (${res.status})`
+    const message = typeof raw === 'string' ? raw : JSON.stringify(raw)
+    throw new Error(message)
   }
   if (res.status === 204) return null
   return res.json()
