@@ -447,9 +447,21 @@ function ResearchSidebar({ activeNav, onNavChange, sessions, onSessionClick }) {
       <div className="flex flex-col p-4 gap-1 h-full overflow-hidden">
         {/* Logo */}
         <div className="flex items-center gap-3 px-2 py-5 mb-2 shrink-0">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg shrink-0"
-            style={{ background: 'linear-gradient(135deg, #d0bcff, #a078ff)' }}>
-            <Icon name="auto_awesome" style={{ color: '#340080', fontVariationSettings: "'FILL' 1", fontSize: '20px' }} />
+          <div className="relative shrink-0">
+            {/* Pulsing glow ring */}
+            <motion.div
+              className="absolute inset-0 rounded-xl"
+              style={{ background: 'linear-gradient(135deg, #d0bcff, #a078ff)', filter: 'blur(8px)' }}
+              animate={{ opacity: [0.4, 0.8, 0.4], scale: [0.9, 1.1, 0.9] }}
+              transition={{ duration: 2.8, repeat: Infinity, ease: 'easeInOut' }}
+            />
+            <motion.div
+              className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg relative"
+              style={{ background: 'linear-gradient(135deg, #d0bcff, #a078ff)' }}
+              animate={{ rotate: [0, 8, -5, 0] }}
+              transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}>
+              <Icon name="auto_awesome" style={{ color: '#340080', fontVariationSettings: "'FILL' 1", fontSize: '20px' }} />
+            </motion.div>
           </div>
           <div>
             <h1 className="text-lg font-extrabold tracking-tight" style={{ color: '#dae2fd', fontFamily: 'Manrope, sans-serif' }}>FusionAI</h1>
@@ -628,7 +640,10 @@ function NewResearchView({ onSubmit, isLoading }) {
 function UserMessage({ message }) {
   const time = new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
   return (
-    <div className="flex flex-col items-end gap-2">
+    <motion.div
+      initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.35, ease: 'easeOut' }}
+      className="flex flex-col items-end gap-2">
       <div className="px-5 py-4 rounded-3xl rounded-tr-none max-w-[80%] border"
         style={{ backgroundColor: 'rgba(45,52,73,0.8)', borderColor: 'rgba(73,68,84,0.15)', color: '#dae2fd' }}>
         <p className="text-sm leading-relaxed" style={{ fontFamily: 'Inter, sans-serif' }}>{message.content}</p>
@@ -636,7 +651,7 @@ function UserMessage({ message }) {
       <span className="text-[10px] uppercase tracking-tighter font-bold" style={{ color: 'rgba(203,195,215,0.4)', fontFamily: 'Manrope, sans-serif' }}>
         {time}
       </span>
-    </div>
+    </motion.div>
   )
 }
 
@@ -645,7 +660,10 @@ function AssistantMessage({ message }) {
   const toolNames = [...new Set((message.tools_used || []).map(toolDisplayName))]
 
   return (
-    <div className="flex gap-4 items-start">
+    <motion.div
+      initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: 'easeOut' }}
+      className="flex gap-4 items-start">
       <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5"
         style={{ background: 'linear-gradient(135deg, #d0bcff, #a078ff)' }}>
         <Icon name="bolt" style={{ color: '#340080', fontVariationSettings: "'FILL' 1", fontSize: '16px' }} />
@@ -709,7 +727,7 @@ function AssistantMessage({ message }) {
           </div>
         )}
       </div>
-    </div>
+    </motion.div>
   )
 }
 
@@ -1278,13 +1296,26 @@ function ResearchApp() {
 
         {view === 'chat' && (
           <>
-            <section className="flex-1 overflow-y-auto px-6 py-8 md:px-10 space-y-10">
-              <div className="max-w-4xl mx-auto w-full space-y-10">
-                {messages.map(msg =>
-                  msg.role === 'user'
-                    ? <UserMessage key={msg.id} message={msg} />
-                    : <AssistantMessage key={msg.id} message={msg} />
-                )}
+            <section className="flex-1 overflow-y-auto px-6 py-8 md:px-12 space-y-10 relative">
+              {/* Subtle ambient background */}
+              <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                <motion.div className="absolute top-1/4 right-1/4 w-[500px] h-[500px] rounded-full blur-[140px]"
+                  style={{ backgroundColor: 'rgba(160,120,255,0.04)' }}
+                  animate={{ x: [0, 30, -15, 0], y: [0, -20, 25, 0] }}
+                  transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }} />
+                <motion.div className="absolute bottom-1/3 left-1/5 w-[350px] h-[350px] rounded-full blur-[120px]"
+                  style={{ backgroundColor: 'rgba(208,188,255,0.03)' }}
+                  animate={{ x: [0, -20, 10, 0], y: [0, 15, -20, 0] }}
+                  transition={{ duration: 14, repeat: Infinity, ease: 'easeInOut', delay: 2 }} />
+              </div>
+              <div className="w-full space-y-10 relative z-10">
+                <AnimatePresence>
+                  {messages.map(msg =>
+                    msg.role === 'user'
+                      ? <UserMessage key={msg.id} message={msg} />
+                      : <AssistantMessage key={msg.id} message={msg} />
+                  )}
+                </AnimatePresence>
                 {isLoading && <ThinkingIndicator step={loadingStep} />}
                 <div ref={messagesEndRef} className="h-44" />
               </div>
@@ -1293,7 +1324,7 @@ function ResearchApp() {
             {/* Floating follow-up input */}
             <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6 pointer-events-none"
               style={{ background: 'linear-gradient(to top, rgba(11,19,38,1) 55%, transparent)' }}>
-              <div className="max-w-4xl mx-auto w-full pointer-events-auto">
+              <div className="w-full pointer-events-auto px-6 md:px-12">
                 <div className="relative rounded-3xl p-2 border"
                   style={{ background: 'rgba(45,52,73,0.7)', backdropFilter: 'blur(20px)', borderColor: 'rgba(73,68,84,0.25)', boxShadow: '0 24px 48px rgba(0,0,0,0.4)' }}>
                   {isLoading && (
