@@ -40,29 +40,68 @@ function Icon({ name, className = '', style }) {
 
 // ─── Animated Hero Mockup ─────────────────────────────────────────────────────
 
-const DEMO_QUERY = 'How does quantum entanglement work?'
-const DEMO_SUMMARY =
-  'Quantum entanglement is a phenomenon where two particles become correlated so that the quantum state of one instantly influences the other — regardless of the distance between them.'
-const DEMO_SOURCES = ['Wikipedia', 'Claude AI', 'Web Search']
+const DEMO_EXAMPLES = [
+  {
+    query: 'How does quantum entanglement work?',
+    summary: 'Quantum entanglement is a phenomenon where two particles become correlated so that the quantum state of one instantly influences the other — regardless of the distance between them.',
+    sources: ['Wikipedia', 'Claude AI', 'Web Search'],
+  },
+  {
+    query: 'What caused the 2008 financial crisis?',
+    summary: 'The 2008 crisis stemmed from the collapse of the U.S. housing bubble, driven by risky mortgage-backed securities, lax regulation, and excessive leverage across major financial institutions.',
+    sources: ['Wikipedia', 'Web Search'],
+  },
+  {
+    query: 'Explain CRISPR gene editing in simple terms',
+    summary: 'CRISPR-Cas9 acts like molecular scissors — it uses a guide RNA to find a specific DNA sequence, then the Cas9 protein cuts it, allowing scientists to delete, repair, or insert genes with precision.',
+    sources: ['Wikipedia', 'Claude AI', 'Web Search'],
+  },
+  {
+    query: 'Why is the sky blue?',
+    summary: 'Sunlight contains all colors of the spectrum. Earth\'s atmosphere scatters shorter blue wavelengths more than red ones (Rayleigh scattering), so the sky appears blue to our eyes during the day.',
+    sources: ['Wikipedia', 'Claude AI'],
+  },
+  {
+    query: 'How does the human immune system fight viruses?',
+    summary: 'When a virus enters the body, innate immunity responds first with inflammation. Then adaptive immunity kicks in — B cells produce antibodies while T cells destroy infected cells, forming long-term memory.',
+    sources: ['Wikipedia', 'Claude AI', 'Web Search'],
+  },
+  {
+    query: 'What is machine learning and how does it work?',
+    summary: 'Machine learning is a branch of AI where models learn patterns from data rather than following explicit rules. Neural networks adjust millions of internal weights during training to minimize prediction error.',
+    sources: ['Wikipedia', 'Claude AI', 'Web Search'],
+  },
+]
 
 function HeroMockup() {
   const [phase, setPhase] = useState('typing')
   const [charCount, setCharCount] = useState(0)
+  const [exampleIndex, setExampleIndex] = useState(0)
 
   useEffect(() => {
+    let active = true
     const timeouts = []
+    let currentIndex = 0
+
     const runCycle = () => {
-      setPhase('typing'); setCharCount(0)
-      DEMO_QUERY.split('').forEach((_, i) => {
-        timeouts.push(setTimeout(() => setCharCount(i + 1), i * 45))
+      if (!active) return
+      const example = DEMO_EXAMPLES[currentIndex]
+      setExampleIndex(currentIndex)
+      setPhase('typing')
+      setCharCount(0)
+      example.query.split('').forEach((_, i) => {
+        timeouts.push(setTimeout(() => { if (active) setCharCount(i + 1) }, i * 38))
       })
-      const done = DEMO_QUERY.length * 45 + 400
-      timeouts.push(setTimeout(() => setPhase('loading'), done))
-      timeouts.push(setTimeout(() => setPhase('result'), done + 1600))
-      timeouts.push(setTimeout(runCycle, done + 6000))
+      const done = example.query.length * 38 + 400
+      timeouts.push(setTimeout(() => { if (active) setPhase('loading') }, done))
+      timeouts.push(setTimeout(() => { if (active) setPhase('result') }, done + 1400))
+      timeouts.push(setTimeout(() => {
+        currentIndex = (currentIndex + 1) % DEMO_EXAMPLES.length
+        runCycle()
+      }, done + 5500))
     }
     runCycle()
-    return () => timeouts.forEach(clearTimeout)
+    return () => { active = false; timeouts.forEach(clearTimeout) }
   }, [])
 
   return (
@@ -85,7 +124,7 @@ function HeroMockup() {
         <div className="border border-gray-200 rounded-xl px-4 py-3 flex items-center gap-2 mb-5 bg-gray-50 min-h-[48px]">
           <span className="text-gray-400 text-sm">🔍</span>
           <span className="text-gray-700 text-sm flex-1">
-            {DEMO_QUERY.slice(0, charCount)}
+            {DEMO_EXAMPLES[exampleIndex].query.slice(0, charCount)}
             {phase === 'typing' && <span className="inline-block w-px h-4 bg-violet-500 ml-px animate-pulse align-middle" />}
           </span>
           {phase !== 'typing' && (
@@ -111,7 +150,7 @@ function HeroMockup() {
             {phase === 'result' && (
               <motion.div key="result" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }} className="space-y-4">
                 <div className="flex gap-2 flex-wrap">
-                  {DEMO_SOURCES.map((src, i) => (
+                  {DEMO_EXAMPLES[exampleIndex].sources.map((src, i) => (
                     <motion.span key={src} initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.1 }}
                       className="text-xs bg-violet-50 text-violet-700 border border-violet-200 px-2.5 py-0.5 rounded-full font-semibold">
                       {src}
@@ -119,11 +158,19 @@ function HeroMockup() {
                   ))}
                 </div>
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.25 }} className="bg-gray-50 rounded-xl p-4 border border-gray-100">
-                  <p className="text-gray-700 text-sm leading-relaxed">{DEMO_SUMMARY}</p>
+                  <p className="text-gray-700 text-sm leading-relaxed">{DEMO_EXAMPLES[exampleIndex].summary}</p>
                 </motion.div>
               </motion.div>
             )}
           </AnimatePresence>
+        </div>
+        <div className="flex justify-center gap-1.5 pt-3">
+          {DEMO_EXAMPLES.map((_, i) => (
+            <motion.div key={i} className="rounded-full"
+              animate={{ width: i === exampleIndex ? 16 : 6, backgroundColor: i === exampleIndex ? '#7c3aed' : '#d1d5db' }}
+              transition={{ duration: 0.35 }}
+              style={{ height: 6 }} />
+          ))}
         </div>
       </div>
     </div>
