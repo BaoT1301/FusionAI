@@ -1,116 +1,200 @@
 # FusionAI - AI Research Assistant
 
-An AI-powered research tool that fuses knowledge from Wikipedia, web search, and Claude AI to generate comprehensive research summaries.
-
-![React](https://img.shields.io/badge/React-18.2.0-61DAFB?logo=react)
-![Flask](https://img.shields.io/badge/Flask-3.1.0-000000?logo=flask)
-![Claude AI](https://img.shields.io/badge/Claude-Sonnet%204-purple)
+FusionAI is a full-stack AI research assistant with a FastAPI backend, LangChain-powered retrieval workflow, PostgreSQL-ready persistence, and a React/Vite frontend.
 
 ## Features
 
-- 🤖 AI-powered research summaries (300-500 words)
-- 🔍 Multi-source integration (Wikipedia + Web Search + Claude AI)
-- ⚡ Fast results (7-10 seconds)
-- 🎨 Modern dark-themed UI
-- 📊 Structured output with sources
+- AI research answers powered by Anthropic Claude
+- Source retrieval from Wikipedia and web search
+- PostgreSQL-backed sessions, messages, research results, and citations
+- Session document storage for multi-document question answering
+- Text, Markdown, and PDF upload support for document-backed QA
+- Optional Redis caching for repeated research queries
+- FastAPI routes with request logging, timing headers, health, and readiness checks
+- Railway-ready backend deployment files
 
 ## Tech Stack
 
 **Frontend:** React, Vite, Axios  
-**Backend:** Python, Flask, LangChain, Claude AI (Anthropic)  
-**APIs:** Anthropic, Wikipedia, DuckDuckGo
+**Backend:** Python, FastAPI, SQLAlchemy, LangChain, Anthropic  
+**Storage:** PostgreSQL on Railway, SQLite fallback for local development  
+**Cache:** Redis when configured, in-memory fallback for development
 
-## Quick Start
+## Workspace Scope
 
-### Prerequisites
-- Python 3.8+
-- Node.js 16+
-- Anthropic API key ([Get one here](https://console.anthropic.com/))
+All session, document, result, research, and chat routes support an optional workspace header:
 
-### Backend Setup
+```http
+x-fusion-workspace-id: local-user
+```
+
+If the header is missing, the backend uses `DEFAULT_WORKSPACE_ID`, which defaults to `anonymous`. This is lightweight workspace scoping, not full authentication, but it keeps data separated for different users or browser profiles.
+
+## Backend Setup
+
 ```bash
 cd backend
 python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
+venv\Scripts\activate
 pip install -r requirements.txt
-
-# Create .env file
-cp .env.example .env
-# Add your API key to .env: ANTHROPIC_API_KEY=your_key_here
-
+copy .env.example .env
 python app.py
 ```
 
-Backend runs on `http://localhost:5001`
+Backend runs on `http://localhost:5001`.
 
-### Frontend Setup
+You can verify backend configuration with:
+
+```bash
+python scripts/doctor.py
+```
+
+For local development, `AUTO_CREATE_TABLES=true` lets the app create SQLite tables automatically.
+
+## Frontend Setup
+
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
 
-Frontend runs on `http://localhost:3000`
-
-## Project Structure
-```
-FusionAI/
-├── backend/
-│   ├── app.py              # Flask API
-│   ├── tools.py            # LangChain tools
-│   ├── requirements.txt    # Python dependencies
-│   └── .env                # API keys (DO NOT COMMIT)
-├── frontend/
-│   ├── src/
-│   │   ├── App.jsx         # Main component
-│   │   └── App.css         # Styles
-│   ├── package.json        # Node dependencies
-│   └── vite.config.js      # Vite config
-└── README.md
-```
-
-## API Endpoints
-
-**Health Check:**
-```http
-GET /api/health
-```
-
-**Research:**
-```http
-POST /api/research
-Content-Type: application/json
-
-{
-  "query": "artificial intelligence"
-}
-```
+Frontend runs on `http://localhost:3000`.
 
 ## Environment Variables
 
-Create `backend/.env`:
+Create `backend/.env` from `backend/.env.example`.
+
+Important values:
+
 ```bash
 ANTHROPIC_API_KEY=your_api_key_here
-PORT=5001
+DATABASE_URL=postgresql://user:password@host:5432/railway
+AUTO_CREATE_TABLES=false
+RUN_MIGRATIONS_ON_START=true
+DEFAULT_WORKSPACE_ID=anonymous
+REDIS_URL=
+FRONTEND_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+LOG_LEVEL=INFO
+REQUEST_LOGGING_ENABLED=true
+SOURCE_LOOKUP_ENABLED=true
 ```
 
-**⚠️ Never commit your `.env` file to GitHub!**
+If `ANTHROPIC_API_KEY` is missing, the backend still runs and returns local fallback answers. If `DATABASE_URL` is missing, local SQLite is used.
 
-## Deployment
+## API Endpoints
 
-**Backend:** Deploy to Render/Heroku (set `ANTHROPIC_API_KEY` in environment variables)  
-**Frontend:** Deploy to Vercel/Netlify (build command: `npm run build`, output: `dist`)
+```http
+GET /api/health
+GET /api/ready
+POST /api/research
+POST /api/chat
+POST /api/sessions
+GET /api/sessions
+GET /api/sessions/{session_id}
+GET /api/sessions/{session_id}/results
+POST /api/sessions/{session_id}/documents
+POST /api/sessions/{session_id}/documents/upload
+GET /api/sessions/{session_id}/documents
+GET /api/documents/{document_id}
+DELETE /api/documents/{document_id}
+GET /api/results/{result_id}
+DELETE /api/sessions/{session_id}
+```
 
-## Cost Note
+Research request:
 
-Claude Sonnet 4 costs approximately **$0.03-0.05 per query**. New users get free trial credits.
+```json
+{
+  "query": "PostgreSQL on Railway",
+  "session_id": "optional-existing-session-id"
+}
+```
 
-## Troubleshooting
+Document request:
 
-**Port in use:** Change `PORT` in `.env` or port in `vite.config.js`  
-**API errors:** Verify API key in `.env` file  
-**Module errors:** Reinstall dependencies with `pip install -r requirements.txt` or `npm install`
+```json
+{
+  "title": "Architecture Notes",
+  "content": "Paste document text here...",
+  "source_type": "document"
+}
+```
+
+Document upload supports `.txt`, `.md`, and `.pdf` files:
+
+```http
+POST /api/sessions/{session_id}/documents/upload
+Content-Type: multipart/form-data
+
+file=<notes.txt>
+title=Optional display title
+```
+
+## Railway Deployment
+
+Recommended Railway setup:
+
+1. Create a Railway project.
+2. Add a PostgreSQL service.
+3. Deploy the `backend` directory as the backend service.
+4. Set environment variables from `backend/.env.example`.
+5. Make sure `DATABASE_URL`, `ANTHROPIC_API_KEY`, and `FRONTEND_ORIGINS` are configured.
+6. Set `AUTO_CREATE_TABLES=false` and `RUN_MIGRATIONS_ON_START=true` for production.
+7. Use the included `Procfile` start command.
+
+Railway should provide `PORT` automatically.
+
+Railway can use `/api/ready` for readiness checks. It returns `503` if the database is unavailable or required production configuration is invalid.
+
+## Database Migrations
+
+Alembic migration files live in `backend/migrations`.
+
+```bash
+cd backend
+alembic upgrade head
+```
+
+In production, `RUN_MIGRATIONS_ON_START=true` runs `alembic upgrade head` during application startup.
+
+For schema changes, create a new migration after updating SQLAlchemy models:
+
+```bash
+alembic revision --autogenerate -m "describe change"
+```
+
+## Project Structure
+
+```text
+FusionAI/
+  backend/
+    app.py
+    config.py
+    database.py
+    models.py
+    schemas.py
+    services/
+    scripts/
+    tests/
+    migrations/
+    requirements.txt
+    Procfile
+  frontend/
+    src/
+    package.json
+    vite.config.js
+```
+
+## Testing
+
+```bash
+cd backend
+python -m pytest tests
+```
+
+The tests use SQLite and disable live source lookup, so they do not require an Anthropic key or network calls.
 
 ## Author
 
-**Bao Tran** - George Mason University  
+Bao Tran - George Mason University
