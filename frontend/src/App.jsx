@@ -1056,41 +1056,28 @@ function SettingsView() {
     return h > 0 ? `${h}h ${m}m` : `${m}m`
   }
 
+  const isOnline = !loading && !!health && health.database_connected
+
   return (
     <div className="flex-1 overflow-y-auto px-6 py-8 md:px-10">
       <div className="max-w-2xl mx-auto">
         <h2 className="text-2xl font-bold mb-8" style={{ color: '#dae2fd', fontFamily: 'Manrope, sans-serif' }}>Settings</h2>
 
-        <Section title="System Status">
-          {loading ? (
-            <p className="text-sm" style={{ color: 'rgba(203,195,215,0.4)', fontFamily: 'Inter, sans-serif' }}>Loading…</p>
-          ) : health ? (
-            <>
-              <SettingRow label="Status" value={health.status}
-                valueColor={health.status === 'healthy' ? '#86efac' : '#fca5a5'} />
-              <SettingRow label="Database" value={health.database} />
-              <SettingRow label="DB Connected" value={health.database_connected ? 'Yes' : 'No'}
-                valueColor={health.database_connected ? '#86efac' : '#fca5a5'} />
-              <SettingRow label="Cache" value={health.cache} />
-              <SettingRow label="Environment" value={health.environment} />
-              <SettingRow label="Version" value={`v${health.version}`} />
-              <SettingRow label="Uptime" value={formatUptime(health.uptime_seconds)} />
-            </>
-          ) : (
-            <p className="text-sm" style={{ color: '#ffb4ab', fontFamily: 'Inter, sans-serif' }}>Backend unreachable — make sure the server is running on port 5001</p>
-          )}
-        </Section>
-
-        <Section title="Workspace">
-          <SettingRow label="Workspace ID" value={WORKSPACE_ID} />
-          <SettingRow label="API Base" value={API_BASE || '(proxied — same origin)'} />
+        <Section title="Service Status">
+          <div className="flex items-center justify-between py-3.5">
+            <span className="text-sm" style={{ color: 'rgba(203,195,215,0.6)', fontFamily: 'Inter, sans-serif' }}>FusionAI Research</span>
+            <span className="flex items-center gap-2 text-sm font-semibold" style={{ color: isOnline ? '#86efac' : '#fca5a5', fontFamily: 'Manrope, sans-serif' }}>
+              <span style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: isOnline ? '#86efac' : '#fca5a5', display: 'inline-block' }} />
+              {loading ? 'Checking…' : isOnline ? 'Online' : 'Offline'}
+            </span>
+          </div>
         </Section>
 
         <Section title="About">
           <SettingRow label="App" value="FusionAI Research" />
-          <SettingRow label="Frontend" value="React + Vite + Tailwind v4" />
-          <SettingRow label="Backend" value="FastAPI + LangChain + SQLite" />
-          <SettingRow label="AI" value="Claude claude-sonnet-4-6" />
+          <SettingRow label="Version" value={health ? `v${health.version}` : 'v2.1.0'} />
+          <SettingRow label="AI Model" value="Claude AI" />
+          <SettingRow label="Built with" value="React · FastAPI · LangChain" />
         </Section>
       </div>
     </div>
