@@ -74,8 +74,15 @@ async def lifespan(_: FastAPI):
         raise RuntimeError("Invalid FusionAI backend configuration: " + "; ".join(errors))
     if settings.run_migrations_on_start:
         logger.info("running Alembic migrations before startup")
-        run_migrations()
+        try:
+            run_migrations()
+            logger.info("Alembic migrations completed successfully")
+        except Exception as exc:
+            logger.exception("Alembic migration FAILED — %s: %s", type(exc).__name__, exc)
+            raise
+    logger.info("running init_db")
     init_db()
+    logger.info("startup complete — serving requests")
     yield
 
 
