@@ -1,42 +1,66 @@
-# FusionAI — AI Research Assistant
+<div align="center">
 
-FusionAI is a full-stack AI research assistant that combines Wikipedia, web search, and Claude AI to synthesize multi-source answers in seconds. It features a fully animated React frontend, a FastAPI backend with LangChain, and PostgreSQL-backed session persistence.
+# ⚡ FusionAI
 
-**Live:** [fusionai.studio](https://www.fusionai.studio)
+### AI-powered research assistant that thinks, searches, and synthesizes — instantly.
 
----
+[![Live](https://img.shields.io/badge/Live-fusionai.studio-6d3bdf?style=for-the-badge&logo=vercel&logoColor=white)](https://www.fusionai.studio)
+[![Frontend](https://img.shields.io/badge/Frontend-Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://fusion-ai-alpha.vercel.app)
+[![Backend](https://img.shields.io/badge/Backend-Railway-0B0D0E?style=for-the-badge&logo=railway&logoColor=white)](https://railway.app)
+[![License](https://img.shields.io/badge/License-MIT-a078ff?style=for-the-badge)](LICENSE)
 
-## Tech Stack
-
-| Layer | Tech |
-|-------|------|
-| Frontend | React 18, Vite 5, Tailwind CSS v4, Framer Motion |
-| Backend | Python 3.12, FastAPI, LangChain, Anthropic Claude |
-| AI | Claude claude-sonnet-4-6 via LangChain direct chain |
-| Database | PostgreSQL (Railway), SQLite fallback for local dev |
-| ORM | SQLAlchemy 2.x + Alembic migrations |
-| DB Driver | psycopg2-binary |
-| Cache | Redis (optional), in-memory fallback |
-| Backend Host | Railway |
-| Frontend Host | Vercel |
+</div>
 
 ---
 
-## Features
+## 🧠 What is FusionAI?
 
-- AI research answers powered by Anthropic Claude (claude-sonnet-4-6)
-- Smart query intent detection — conversational messages skip web search entirely
-- Parallel Wikipedia + DuckDuckGo source fetching for faster responses
-- Direct LangChain `prompt | llm` chain (no multi-round agent overhead)
-- PostgreSQL-backed sessions, messages, research results, and citations
-- Document upload (`.txt`, `.md`, `.pdf`) for document-backed Q&A
-- Optional Redis caching for repeated queries
-- Fully animated landing page and chat interface (Framer Motion)
-- FastAPI with request logging, timing headers, health and readiness endpoints
+FusionAI combines **Wikipedia**, **web search**, and **Anthropic Claude** into a single research assistant that synthesizes multi-source answers in seconds. Ask anything — it finds, verifies, and explains it in plain language with cited sources.
+
+- 💬 Conversational interface with full session history
+- 🔍 Smart intent detection — skips search for greetings, only fetches when needed
+- ⚡ Parallel source fetching (Wikipedia + DuckDuckGo simultaneously)
+- 📄 Upload documents (PDF, Markdown, TXT) for document-backed Q&A
+- 🎨 Fully animated UI with Framer Motion
 
 ---
 
-## Local Development
+## 🛠️ Tech Stack
+
+<table>
+<tr>
+<td><strong>Frontend</strong></td>
+<td>React 18 · Vite 5 · Tailwind CSS v4 · Framer Motion</td>
+</tr>
+<tr>
+<td><strong>Backend</strong></td>
+<td>Python 3.12 · FastAPI · LangChain · Anthropic Claude</td>
+</tr>
+<tr>
+<td><strong>AI Model</strong></td>
+<td>claude-sonnet-4-6 via direct LangChain <code>prompt | llm</code> chain</td>
+</tr>
+<tr>
+<td><strong>Database</strong></td>
+<td>PostgreSQL (Railway) · SQLite fallback for local dev</td>
+</tr>
+<tr>
+<td><strong>ORM</strong></td>
+<td>SQLAlchemy 2.x · Alembic migrations · psycopg2-binary</td>
+</tr>
+<tr>
+<td><strong>Cache</strong></td>
+<td>Redis (optional) · in-memory fallback</td>
+</tr>
+<tr>
+<td><strong>Hosting</strong></td>
+<td>Railway (backend) · Vercel (frontend)</td>
+</tr>
+</table>
+
+---
+
+## 🚀 Local Development
 
 ### Backend
 
@@ -46,14 +70,13 @@ python -m venv venv
 venv\Scripts\activate        # Windows
 # source venv/bin/activate   # Mac/Linux
 pip install -r requirements.txt
-copy .env.example .env       # then fill in your values
+copy .env.example .env       # fill in your values
 python app.py
 ```
 
-Backend runs on `http://localhost:5001`.
+> Backend runs on **http://localhost:5001**
 
-Run the config doctor to verify your setup:
-
+Verify your setup:
 ```bash
 python scripts/doctor.py
 ```
@@ -68,36 +91,42 @@ npm install
 npm run dev
 ```
 
-Frontend runs on `http://localhost:3000`. The Vite dev server proxies `/api/*` to `localhost:5001` automatically — no `VITE_API_URL` needed locally.
+> Frontend runs on **http://localhost:3000**
+
+The Vite dev server proxies `/api/*` → `localhost:5001` automatically. No `VITE_API_URL` needed locally.
 
 ---
 
-## Environment Variables
+## 🔑 Environment Variables
 
-### Backend (`backend/.env`)
-
-Copy from `backend/.env.example` and fill in:
+### Backend — `backend/.env`
 
 ```env
+# Required
 ANTHROPIC_API_KEY=your_key_here
 DATABASE_URL=postgresql://user:password@host:5432/dbname
 ENVIRONMENT=production
 FRONTEND_ORIGINS=https://www.fusionai.studio,https://your-app.vercel.app
+
+# AI
 ANTHROPIC_MODEL=claude-sonnet-4-6
 MAX_TOKENS=2000
+
+# Database
 AUTO_CREATE_TABLES=false
-RUN_MIGRATIONS_ON_START=false
+RUN_MIGRATIONS_ON_START=false   # migrations run via Procfile before uvicorn
+
+# Sources
 SOURCE_LOOKUP_ENABLED=true
 WIKIPEDIA_RESULTS=1
 WEB_SEARCH_RESULTS=3
+
+# Cache
 LOCAL_CACHE_ENABLED=true
 CACHE_TTL_SECONDS=1800
-LOG_LEVEL=INFO
 ```
 
-> In production, migrations run via the Procfile (`alembic upgrade head && uvicorn ...`) before the app starts. Keep `RUN_MIGRATIONS_ON_START=false`.
-
-### Frontend (`frontend/.env`)
+### Frontend — `frontend/.env`
 
 ```env
 VITE_API_URL=https://your-railway-backend.up.railway.app
@@ -106,79 +135,72 @@ VITE_WORKSPACE_ID=web-client
 
 ---
 
-## Database Migrations
+## ☁️ Deployment
 
-Alembic migrations live in `backend/migrations/`.
+### 🚂 Railway (Backend)
 
-Run manually:
+1. Create a Railway project → add a **PostgreSQL** service
+2. Add backend as a new service → set **Root Directory** to `backend`
+3. Railway auto-detects Python via `runtime.txt` and uses the `Procfile`
+4. Set environment variables in **Variables** tab
+5. Set `DATABASE_URL` to `${{Postgres.DATABASE_URL}}` (Railway reference variable)
 
-```bash
-cd backend
-alembic upgrade head
-```
-
-In production (Railway), the `Procfile` runs migrations automatically before uvicorn starts:
-
+The `Procfile` runs migrations before starting the server:
 ```
 web: alembic upgrade head && uvicorn app:app --host 0.0.0.0 --port $PORT
 ```
 
-To create a new migration after changing SQLAlchemy models:
+> `/api/ready` serves as a readiness endpoint — returns `503` if DB is down or config is invalid.
+
+### 🔺 Vercel (Frontend)
+
+1. Import repo in Vercel → set **Root Directory** to `frontend`, framework to **Vite**
+2. Add env vars: `VITE_API_URL` and `VITE_WORKSPACE_ID`
+3. Deploy — `VITE_*` vars are baked into the bundle at build time, so redeploy after any change
+
+---
+
+## 🗄️ Database Migrations
+
+Migrations live in `backend/migrations/` and are managed by Alembic.
 
 ```bash
+# Run all pending migrations
+cd backend
+alembic upgrade head
+
+# Create a new migration after changing models
 alembic revision --autogenerate -m "describe your change"
 ```
 
----
-
-## Deployment
-
-### Railway (Backend)
-
-1. Create a Railway project and add a **PostgreSQL** service
-2. Add the backend as a service with **Root Directory** set to `backend`
-3. Railway auto-detects Python via `runtime.txt` and uses the `Procfile`
-4. Set environment variables in Railway → Variables tab (see above)
-5. `DATABASE_URL` should reference your PostgreSQL service: `${{Postgres.DATABASE_URL}}`
-
-Railway exposes `/api/ready` for readiness checks — returns `503` if the database is down or config is invalid.
-
-### Vercel (Frontend)
-
-1. Import the repository in Vercel
-2. Set **Root Directory** to `frontend` and framework to **Vite**
-3. Add environment variables: `VITE_API_URL` and `VITE_WORKSPACE_ID`
-4. Deploy — `VITE_*` vars are baked into the build bundle at deploy time
+In production, the Procfile runs `alembic upgrade head` automatically before the app starts — no manual intervention needed on deploy.
 
 ---
 
-## API Endpoints
+## 📡 API Reference
 
-```
-GET  /api/health
-GET  /api/ready
-POST /api/research
-POST /api/chat
-POST /api/sessions
-GET  /api/sessions
-GET  /api/sessions/{session_id}
-GET  /api/sessions/{session_id}/results
-POST /api/sessions/{session_id}/documents
-POST /api/sessions/{session_id}/documents/upload
-GET  /api/sessions/{session_id}/documents
-GET  /api/documents/{document_id}
-DELETE /api/documents/{document_id}
-GET  /api/results/{result_id}
-DELETE /api/sessions/{session_id}
-GET  /api/insights
-```
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/health` | Health check + system status |
+| `GET` | `/api/ready` | Readiness check (used by Railway) |
+| `POST` | `/api/research` | Submit a research query |
+| `POST` | `/api/chat` | Send a follow-up chat message |
+| `POST` | `/api/sessions` | Create a new session |
+| `GET` | `/api/sessions` | List all sessions |
+| `GET` | `/api/sessions/{id}` | Get session with messages |
+| `DELETE` | `/api/sessions/{id}` | Delete a session |
+| `GET` | `/api/sessions/{id}/results` | Get research results for session |
+| `POST` | `/api/sessions/{id}/documents` | Add a document to session |
+| `POST` | `/api/sessions/{id}/documents/upload` | Upload a file (PDF/MD/TXT) |
+| `GET` | `/api/documents/{id}` | Get a document |
+| `DELETE` | `/api/documents/{id}` | Delete a document |
+| `GET` | `/api/results/{id}` | Get a research result |
+| `GET` | `/api/insights` | Usage analytics |
 
-**Research request:**
+**Research request body:**
 ```json
-{ "query": "what is quantum computing", "session_id": "optional-id" }
+{ "query": "what is quantum computing", "session_id": "optional-existing-id" }
 ```
-
-**Document upload:** `multipart/form-data` with `file` + optional `title` fields.
 
 All routes accept an optional workspace header for data isolation:
 ```
@@ -187,56 +209,56 @@ x-fusion-workspace-id: your-workspace-id
 
 ---
 
-## Project Structure
+## 📁 Project Structure
 
 ```
 FusionAI/
 ├── backend/
-│   ├── app.py                  # FastAPI app + lifespan
-│   ├── config.py               # Settings + diagnostics
-│   ├── database.py             # SQLAlchemy engine + session
-│   ├── models.py               # ORM models
-│   ├── schemas.py              # Pydantic request/response models
+│   ├── app.py                  # FastAPI app + lifespan startup
+│   ├── config.py               # Settings dataclass + diagnostics
+│   ├── database.py             # SQLAlchemy engine + session factory
+│   ├── models.py               # ORM models (Session, Message, Result, Source, Document)
+│   ├── schemas.py              # Pydantic request/response schemas
 │   ├── services/
-│   │   ├── ai.py               # LangChain chain + Claude integration
-│   │   ├── sources.py          # Wikipedia + web search + intent detection
-│   │   ├── research.py         # Research query orchestration
-│   │   ├── sessions.py         # Session management
-│   │   ├── cache.py            # Redis + in-memory cache
-│   │   ├── documents.py        # Document storage
-│   │   ├── uploads.py          # File upload parsing
-│   │   ├── insights.py         # Usage analytics
+│   │   ├── ai.py               # LangChain chain + Claude integration (cached)
+│   │   ├── sources.py          # Wikipedia + DuckDuckGo + intent detection
+│   │   ├── research.py         # Research orchestration + session handling
+│   │   ├── sessions.py         # Session CRUD + message history
+│   │   ├── cache.py            # Redis + in-memory cache layer
+│   │   ├── documents.py        # Document storage + retrieval
+│   │   ├── uploads.py          # PDF/Markdown/TXT parsing
+│   │   ├── insights.py         # Usage analytics aggregation
 │   │   └── operations.py       # Alembic migration runner
-│   ├── migrations/             # Alembic migration files
+│   ├── migrations/             # Alembic version files
 │   ├── scripts/
-│   │   └── doctor.py           # Config health checker
-│   ├── tests/                  # pytest test suite
+│   │   └── doctor.py           # Config health checker CLI
+│   ├── tests/                  # pytest suite (SQLite, no API key needed)
 │   ├── requirements.txt
-│   ├── Procfile                # Railway start command
-│   ├── runtime.txt             # Python version
+│   ├── Procfile                # Railway: alembic upgrade head && uvicorn
+│   ├── runtime.txt             # python-3.12.8
 │   └── alembic.ini
 └── frontend/
     ├── src/
-    │   ├── App.jsx             # Full app — landing page + research UI
-    │   ├── App.css
-    │   └── main.jsx
+    │   ├── App.jsx             # Entire app — landing page + research UI
+    │   ├── App.css             # Global styles + Tailwind config
+    │   └── main.jsx            # React entry point
     ├── package.json
     └── vite.config.js
 ```
 
 ---
 
-## Testing
+## 🧪 Testing
 
 ```bash
 cd backend
 python -m pytest tests
 ```
 
-Tests use SQLite and disable live source lookup — no Anthropic key or network required.
+Tests use SQLite and disable live source lookup — no Anthropic key or network access required.
 
 ---
 
-## Author
+## 👤 Author
 
-Bao Tran — George Mason University
+**Bao Tran** — George Mason University
