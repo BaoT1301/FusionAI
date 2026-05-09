@@ -16,7 +16,7 @@ from services.ai import run_research
 from services.cache import ResearchCache
 from services.documents import document_cache_key, document_sources_for_session
 from services.sessions import WorkspaceAccessError, add_message, get_or_create_session, get_recent_history
-from services.sources import gather_sources
+from services.sources import gather_sources, needs_search
 from services.text import normalize_query, title_from_query
 
 
@@ -153,7 +153,8 @@ def research_query(
         cached = True
     else:
         history = get_recent_history(db, session.id)
-        sources = [*document_sources, *gather_sources(query)]
+        web_sources = gather_sources(query) if needs_search(query) else []
+        sources = [*document_sources, *web_sources]
         payload = run_research(query, history, sources)
         if document_sources and "documents" not in payload.tools_used:
             payload.tools_used.append("documents")

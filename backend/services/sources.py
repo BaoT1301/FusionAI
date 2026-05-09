@@ -1,9 +1,37 @@
 from __future__ import annotations
 
+import re
 from concurrent.futures import ThreadPoolExecutor
 
 from config import get_settings
 from schemas import SourceOut
+
+# Patterns that indicate a conversational message that doesn't need web search
+_CONVERSATIONAL_PATTERNS = re.compile(
+    r"^("
+    r"hi+|hello+|hey+|howdy|greetings|sup|yo|"
+    r"good\s+(morning|afternoon|evening|night)|"
+    r"my name is|i('m| am) |i feel|i think|i want|i need|i like|i love|i hate|"
+    r"thank(s| you)|thx|ty\b|"
+    r"bye|goodbye|see you|cya|"
+    r"yes|no|ok|okay|sure|alright|got it|understood|"
+    r"what('s| is) your name|who are you|what can you do|help me|"
+    r"nice|cool|great|awesome|wow|interesting"
+    r")",
+    re.IGNORECASE,
+)
+
+
+def needs_search(query: str) -> bool:
+    """Return True if the query likely benefits from external web/wiki sources."""
+    stripped = query.strip()
+    # Very short messages are almost always conversational
+    if len(stripped) < 10:
+        return False
+    # Match known conversational openers
+    if _CONVERSATIONAL_PATTERNS.match(stripped):
+        return False
+    return True
 
 
 def _trim(value: str | None, limit: int = 700) -> str:

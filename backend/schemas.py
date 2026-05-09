@@ -33,7 +33,7 @@ class SourceOut(BaseModel):
 
 
 class ResearchRequest(BaseModel):
-    query: str = Field(..., min_length=3, max_length=1200)
+    query: str = Field(..., min_length=1, max_length=1200)
     session_id: str | None = None
 
     @field_validator("query")
@@ -59,7 +59,7 @@ class ResearchResponse(BaseModel):
 
 
 class ChatRequest(BaseModel):
-    message: str = Field(..., min_length=3, max_length=1200)
+    message: str = Field(..., min_length=1, max_length=1200)
     session_id: str | None = None
 
     @field_validator("message")
